@@ -1,5 +1,6 @@
 # SimpleAH
 This is a modified version of a really old version of Aux. Which was itself based on Auctionator. I preferred the old version of Aux because it was simple. Then I added a lot of new features, while maintaining its simplicity.  
+
 I renamed it SimpleAH so that it wouldn't interfere with the new Aux. I can't guarantee there are no bugs, but I tested it as much as I could.  
 
 This picture shows the buy tab. All searches are saved as buttons on the left(Quick Buy). There is a checkbox next to keep that search at the top. You can shift-click to highlight multiples. You can also buy from the sell tab.  
