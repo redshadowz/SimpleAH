@@ -3,7 +3,7 @@ This is a modified version of a really old version of Aux. Which was itself base
 
 I renamed it SimpleAH so that it wouldn't interfere with the new Aux. I can't guarantee there are no bugs, but I tested it as much as I could.  
 
-This picture shows the buy tab. All searches are saved as buttons on the left(Quick Buy). There is a checkbox next to keep that search at the top. You can shift-click to highlight multiples. You can also buy from the sell tab.  
+This picture shows the buy tab. All searches are saved as buttons on the left(Quick Buy). There is a checkbox next to each search to keep that search at the top. You can shift-click to highlight multiples items. You can also buy from the sell tab.  
 
 <img width="751" height="383" alt="Image" src="https://github.com/user-attachments/assets/d7105878-8b00-4fe9-89d7-f6830775e503" />  
 
