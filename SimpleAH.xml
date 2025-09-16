@@ -1,0 +1,622 @@
+<Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
+
+	<Script file="SimpleAH.lua"/> 
+  
+	<!-- Core XML --> 
+	<Frame>
+      <Scripts> 
+			<OnLoad>
+				this:RegisterEvent("ADDON_LOADED")
+				this:RegisterEvent("AUCTION_HOUSE_CLOSED")
+				this:RegisterEvent("AUCTION_BIDDER_LIST_UPDATE")
+				this:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
+				this:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
+			</OnLoad>
+			<OnEvent> 
+				SAH_OnEvent()
+			</OnEvent> 
+			<OnUpdate>
+				SAH_OnUpdate()
+			</OnUpdate>
+		</Scripts> 
+	</Frame>
+	<!-- Scan XML -->
+	<GameTooltip name="SAHScanTooltip" inherits="GameTooltipTemplate"/>
+	<!-- Sell XML -->
+	<Button name="SAHSellEntryTemplate" virtual="true" hidden="true">
+		<Size><AbsDimension y="16" /></Size>		
+		<Frames>
+			<Frame>
+				<Size><AbsDimension x="120" y="16" /></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="22" y="0"/></Offset></Anchor></Anchors>
+				<Frames>
+					<Frame name="$parent_UnitPrice" inherits="SmallMoneyFrameTemplate">
+						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						<Scripts>
+							<OnLoad>
+								SmallMoneyFrame_OnLoad()
+								MoneyFrame_SetType("STATIC")
+							</OnLoad>
+						</Scripts>
+					</Frame>
+				</Frames>
+			</Frame>
+			<Frame>
+				<Size><AbsDimension x="100" y="16"/></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="185" y="-3"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<FontString name="$parent_Stacks" inherits="GameFontHighlightSmall">
+							<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Frame>
+				<Size><AbsDimension x="100" y="16"/></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="340" y="-3"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<FontString name="$parent_Time" inherits="GameFontHighlightSmall">
+							<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Frame>
+				<Size><AbsDimension x="120" y="16"/></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="440" y="0"/></Offset></Anchor></Anchors>
+				<Frames>
+					<Frame name="$parent_TotalPrice" inherits="SmallMoneyFrameTemplate">
+						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						<Scripts>
+							<OnLoad>
+								SmallMoneyFrame_OnLoad()
+								MoneyFrame_SetType("STATIC")
+							</OnLoad>
+						</Scripts>
+					</Frame>
+				</Frames>
+			</Frame>
+		</Frames>
+		<HighlightTexture file="Interface\HelpFrame\HelpFrameButton-Highlight" alphaMode="ADD">
+			<TexCoords left="0" right="1.0" top="0.0" bottom="0.6"/>
+		</HighlightTexture>
+		<Scripts>
+			<OnClick>
+				SAHSellEntry_OnClick()
+			</OnClick>
+		</Scripts>
+	</Button>
+	<Frame name="SAHSellTemplate" virtual="true" hidden="true">
+		<Size><AbsDimension x="694" y="447"/></Size>
+		<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="210" y="0"/></Offset></Anchor></Anchors>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<FontString inherits="GameFontNormal" text="SAH Sell"><Anchors><Anchor point="TOP"><Offset><AbsDimension x="20" y="-18"/></Offset></Anchor></Anchors></FontString>
+				<FontString name="SAHSellMessage" inherits="GameFontNormal"><Anchors><Anchor point="TOP"><Offset><AbsDimension x="170" y="-100"/></Offset></Anchor></Anchors></FontString>
+				<FontString name="SAHRecommendText" inherits="GameFontNormal" text="Recommended buyout price"><Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="287" y="-98"/></Offset></Anchor></Anchors></FontString>
+				<FontString name="SAHRecommendBasisText" inherits="GameFontHighlightSmall" text="based on"><Anchors><Anchor point="LEFT" relativePoint="RIGHT" relativeTo="SAHRecommendText"><Offset><AbsDimension x="20" y="-2"/></Offset></Anchor></Anchors></FontString>
+				<FontString name="SAHRecommendPerStackText" inherits="GameFontHighlightSmall" text="per stack"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHRecommendText"><Offset><AbsDimension x="152" y="-28"/></Offset></Anchor></Anchors></FontString>
+				<FontString name="SAHRecommendPerItemText" inherits="GameFontHighlightSmall" text="per item"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHRecommendText"><Offset><AbsDimension x="152" y="-51"/></Offset></Anchor></Anchors></FontString>
+				<FontString name="SAHRecommendStaleText" inherits="GameFontRedLarge"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHRecommendText"><Offset><AbsDimension x="430" y="-65"/></Offset></Anchor></Anchors></FontString>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture name="$parentMiddle" file="Interface\Glues\CharacterCreate\CharacterCreate-LabelFrame">
+					<Size><AbsDimension x="606" y="64"/></Size>
+					<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="216" y="-167"/></Offset></Anchor></Anchors>
+					<TexCoords left="0.1953125" right="0.8046875" top="0" bottom="1"/>
+				</Texture>
+				<FontString inherits="GameFontHighlightSmall" text="Unit Price"><Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="80" y="1"/></Offset></Anchor></Anchors></FontString>
+				<FontString inherits="GameFontHighlightSmall" text="Stacks"><Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="189" y="1"/></Offset></Anchor></Anchors></FontString>
+				<FontString inherits="GameFontHighlightSmall" text="Max Time Left"><Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="341" y="1"/></Offset></Anchor></Anchors></FontString>
+				<FontString inherits="GameFontHighlightSmall" text="Total Price"><Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="496" y="1"/></Offset></Anchor></Anchors></FontString>
+			</Layer>
+		</Layers>
+		<Frames>		
+			<Button>
+				<Size><AbsDimension x="612" y="118"/></Size>
+				<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="213" y="-70"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="BACKGROUND"></Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						this:RegisterEvent("NEW_AUCTION_UPDATE")
+						this:RegisterForDrag("LeftButton")
+					</OnLoad>
+					<OnEvent>
+						if event == "NEW_AUCTION_UPDATE" then
+							SAH_Hilite1:Hide()
+						end
+					</OnEvent>
+					<OnClick>
+						ClickAuctionSellItemButton()
+						ClearCursor()
+						AuctionsFrameAuctions_ValidateAuction()
+					</OnClick>
+					<OnReceiveDrag>
+						ClickAuctionSellItemButton()
+						AuctionsFrameAuctions_ValidateAuction()
+					</OnReceiveDrag>
+					<OnEnter>
+						SAH_Hilite1:Show()
+					</OnEnter>
+					<OnLeave>
+						SAH_Hilite1:Hide()
+					</OnLeave>
+				</Scripts>
+				<Frames>
+					<Frame name="SAH_Hilite1" hidden="true">
+						<Anchors>
+							<Anchor point="TOPLEFT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor>
+							<Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor>
+						</Anchors>
+						<Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border">
+							<EdgeSize><AbsValue val="16"/></EdgeSize>
+						</Backdrop>
+					</Frame>			
+				</Frames>		
+			</Button>
+			<Button name="SAHRecommendItemTex">
+				<Size><AbsDimension x="37" y="37"/></Size>
+				<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="234" y="-87"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString name="$parentCount" inherits="NumberFontNormal" justifyH="RIGHT" hidden="true">
+							<Anchors><Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="-5" y="2"/></Offset></Anchor></Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Button>
+			<Frame>
+				<Size><AbsDimension x="120" y="20"/></Size>
+				<Anchors><Anchor point="TOPLEFT" relativeTo="SAHRecommendText"><Offset><AbsDimension x="32" y="-24"/></Offset></Anchor></Anchors>
+				<Frames>
+					<Frame name="SAHRecommendPerStackPrice" inherits="SmallMoneyFrameTemplate">
+						<Size><AbsDimension x="120" y="16" /></Size>
+						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						<Scripts><OnLoad>SAHMoneyFrame_OnLoad()</OnLoad></Scripts>
+					</Frame>
+				</Frames>
+			</Frame>
+			<Frame>
+				<Size><AbsDimension x="120" y="20"/></Size>
+				<Anchors><Anchor point="TOPLEFT" relativeTo="SAHRecommendText"><Offset><AbsDimension x="32" y="-46"/></Offset></Anchor></Anchors>
+				<Frames>
+					<Frame name="SAHRecommendPerItemPrice" inherits="SmallMoneyFrameTemplate">
+						<Size><AbsDimension x="120" y="16" /></Size>
+						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						<Scripts><OnLoad>SAHMoneyFrame_OnLoad()</OnLoad></Scripts>
+					</Frame>
+				</Frames>
+			</Frame>
+			<Button name="SAHSellRefreshButton" inherits="UIPanelButtonTemplate" text="Refresh">
+				<Size><AbsDimension x="110" y="22"/></Size>
+				<Anchors><Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT"><Offset><AbsDimension x="51" y="14"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnClick>
+						SAHSellRefreshButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="SAHSellBuySelectedButton" inherits="UIPanelButtonTemplate" text="Buy Selected" enable="false">
+				<Size><AbsDimension x="110" y="22"/></Size>
+				<Anchors><Anchor point="RIGHT" relativeTo="SAHSellRefreshButton" relativePoint="LEFT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnClick>
+						SAHSellBuySelectedButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="SAHSellStopScanningButton" inherits="UIPanelButtonTemplate" text="Stop Scanning" enable="false">
+				<Size><AbsDimension x="100" y="22"/></Size>
+				<Anchors><Anchor point="RIGHT" relativeTo="SAHSellBuySelectedButton" relativePoint="LEFT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnClick>
+						SAHSellStopScanningButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<EditBox name="SAHSellRepeatBox" autoFocus="false" inherits="InputBoxTemplate" letters="3" numeric="true">
+				<Size><AbsDimension x="35" y="20"/></Size>
+				<Anchors><Anchor point="TOPRIGHT" relativeTo="BuyoutPriceCopper" relativePoint="BOTTOMRIGHT"><Offset><AbsDimension x="0" y="-9"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString name="$parentText" inherits="GameFontHighlightSmall">
+							<Anchors><Anchor point="RIGHT" relativeTo="SAHSellRepeatBox" relativePoint="LEFT"><Offset><AbsDimension x="-10" y="0"/></Offset></Anchor></Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						this:SetText(1)
+						SAHSellRepeatBoxText:SetText("Times to repeat")
+					</OnLoad>
+					<OnEnterPressed>
+						this:ClearFocus()
+						if this:GetText() == "" then this:SetText(1) end
+					</OnEnterPressed>
+					<OnEscapePressed>
+						this:ClearFocus()
+						if this:GetText() == "" then this:SetText(1) end
+					</OnEscapePressed>
+					<OnTabPressed>
+						this:ClearFocus()
+						if this:GetText() == "" then this:SetText(1) end
+					</OnTabPressed>
+					<OnEditFocusLost>
+						if this:GetText() == "" then this:SetText(1) end
+					</OnEditFocusLost>
+				</Scripts>
+			</EditBox>
+			<ScrollFrame name="SAHScrollFrame" inherits="FauxScrollFrameTemplate">
+				<Size><AbsDimension x="588" y="194"/></Size>
+				<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="210" y="-213"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnVerticalScroll>
+						FauxScrollFrame_OnVerticalScroll(16, SAH_ScrollbarUpdate)
+					</OnVerticalScroll>
+				</Scripts>
+			</ScrollFrame>
+			<Button name="SAHSellEntry1" inherits="SAHSellEntryTemplate">
+				<Anchors><Anchor point="TOPLEFT" relativeTo="SAHScrollFrame" relativePoint="TOPLEFT"><Offset><AbsDimension x="8" y="0"/></Offset></Anchor></Anchors>
+			</Button>
+			<Button name="SAHSellEntry2"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry1"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry3"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry2"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry4"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry3"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry5"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry4"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry6"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry5"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry7"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry6"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry8"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry7"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry9"  inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry8"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry10" inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry9"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry11" inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry10" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+			<Button name="SAHSellEntry12" inherits="SAHSellEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHSellEntry11" relativePoint="BOTTOMLEFT"/></Anchors></Button>   
+		</Frames>
+	</Frame>
+	<!-- Buy XML -->
+	<Button name="SAHBuyEntryTemplate" virtual="true" hidden="true">
+		<Size><AbsDimension y="16"/></Size>		
+		<Frames>
+			<Frame>
+				<Size><AbsDimension x="120" y="16" /></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="0" y="-3"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<FontString name="$parent_Name" inherits="GameFontHighlightSmall">
+							<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Frame>
+				<Size><AbsDimension x="120" y="16" /></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="313" y="0"/></Offset></Anchor></Anchors>
+				<Frames>
+					<Frame name="$parent_UnitPrice" inherits="SmallMoneyFrameTemplate">
+						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						<Scripts>
+							<OnLoad>
+								SmallMoneyFrame_OnLoad()
+								MoneyFrame_SetType("STATIC")
+							</OnLoad>
+						</Scripts>
+					</Frame>
+				</Frames>
+			</Frame>
+			<Frame>
+				<Size><AbsDimension x="50" y="16" /></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="420" y="-3"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<FontString name="$parent_StackSize" inherits="GameFontHighlightSmall">
+							<Anchors><Anchor point="TOPRIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+			<Frame>
+				<Size><AbsDimension x="120" y="16" /></Size>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="520" y="0"/></Offset></Anchor></Anchors>
+				<Frames>
+					<Frame name="$parent_TotalPrice" inherits="SmallMoneyFrameTemplate">
+						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+						<Scripts>
+							<OnLoad>
+								SmallMoneyFrame_OnLoad()
+								MoneyFrame_SetType("STATIC")
+							</OnLoad>
+						</Scripts>
+					</Frame>
+				</Frames>
+			</Frame>
+		</Frames>
+		<HighlightTexture file="Interface\HelpFrame\HelpFrameButton-Highlight" alphaMode="ADD">
+			<TexCoords left="0" right="1.0" top="0.0" bottom="0.6"/>
+			<Size><AbsDimension x="630" y="16"/></Size>
+			<Anchors>
+				<Anchor point="TOPLEFT">
+					<Offset>
+						<AbsDimension x="0" y="0"/>
+					</Offset>
+				</Anchor>
+			</Anchors>
+		</HighlightTexture>
+		<Scripts>
+			<OnEnter>
+				SAHBuyEntry_OnEnter(this:GetID());
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide();
+			</OnLeave>
+			<OnClick>
+				SAHBuyEntry_OnClick(this:GetID())
+			</OnClick>
+		</Scripts>
+	</Button>
+	<Button name="SAHQuickBuyTemplate" inherits="UIPanelButtonGrayTemplate" virtual="true" hidden="true">
+		<NormalText inherits="GameFontHighlightSmall"/>
+		<DisabledText inherits="GameFontDisableSmall"/>
+		<HighlightText inherits="GameFontHighlightSmall"/>
+		<Size><AbsDimension x="135" y="18"/></Size>
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture name ="$parentTextureGold" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT"><Offset><AbsDimension x="3" y="-2"/></Offset></Anchor>
+						<Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="-3" y="2"/></Offset></Anchor>						
+					</Anchors>
+					<Color r="1" g=".85" b="0.0" a=".15"/>
+				</Texture>	
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnClick>
+				SAH_QuickBuyButtonPressed(this:GetID())
+			</OnClick>
+		</Scripts>
+	</Button>
+	<CheckButton name="SAHQuickBuyCheckButtonTemplate" inherits="UICheckButtonTemplate" virtual="true" hidden="true">
+		<Size><AbsDimension x="18" y="18"/></Size>
+		<Scripts>
+			<OnClick>
+				SAH_QuickBuyPriorityCheckButtonPressed(this:GetID(),this:GetChecked())
+			</OnClick>
+		</Scripts>
+	</CheckButton>
+	<Frame name="SAHBuyTemplate" virtual="true" hidden="true">
+		<Size><AbsDimension x="694" y="447"/></Size>
+		<Anchors><Anchor point="TOPLEFT"/></Anchors>	
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString name="SAHBuyTotalLabel" inherits="GameFontHighlightSmall" text="Total:">
+					<Anchors><Anchor point="BOTTOMLEFT"><Offset><AbsDimension x="290" y="18"/></Offset></Anchor></Anchors>
+				</FontString>
+				<Texture name="$parentMiddle" file="Interface\Glues\CharacterCreate\CharacterCreate-LabelFrame">
+					<Size><AbsDimension x="802" y="64"/></Size>
+					<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="20" y="-52"/></Offset></Anchor></Anchors>
+					<TexCoords left="0.1953125" right="0.8046875" top="0" bottom="1"/>
+				</Texture>
+				<FontString inherits="GameFontHighlightSmall" text="Quick Buy">
+					<Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="27" y="1"/></Offset></Anchor></Anchors>
+				</FontString>
+				<FontString inherits="GameFontHighlightSmall" text="Name">
+					<Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="152" y="1"/></Offset></Anchor></Anchors>
+				</FontString>
+				<FontString inherits="GameFontHighlightSmall" text="Unit Price">
+					<Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="510" y="1"/></Offset></Anchor></Anchors>
+				</FontString>
+				<FontString inherits="GameFontHighlightSmall" text="Stack Size">
+					<Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="585" y="1"/></Offset></Anchor></Anchors>
+				</FontString>
+				<FontString inherits="GameFontHighlightSmall" text="Total Price">
+					<Anchors><Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentMiddle"><Offset><AbsDimension x="710" y="1"/></Offset></Anchor></Anchors>
+				</FontString>
+				<FontString inherits="GameFontNormal" text="SAH Buy">
+					<Anchors><Anchor point="TOP"><Offset><AbsDimension x="20" y="-18"/></Offset></Anchor></Anchors>
+				</FontString>
+				<FontString name="SAHBuyMessage" inherits="GameFontNormal">
+					<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="210" y="-78"/></Offset></Anchor></Anchors>
+				</FontString>
+				<FontString name="SAHBuySearchBoxLabel" inherits="GameFontHighlightSmall" text="Search For">
+					<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="160" y="-50"/></Offset></Anchor></Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>		
+            <EditBox name="SAHBuySearchBox" autoFocus="false" inherits="InputBoxTemplate">
+				<Size><AbsDimension x="240" y="20"/></Size>
+				<Anchors><Anchor point="LEFT" relativeTo="SAHBuySearchBoxLabel" relativePoint="RIGHT"><Offset><AbsDimension x="10" y="0"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnEnterPressed>
+						this:ClearFocus()
+						SAHBuySearchButton_OnClick()
+					</OnEnterPressed>
+				</Scripts>
+			</EditBox>
+			<Button name="SAHBuySearchButton" inherits="UIPanelButtonTemplate" text="Search">
+				<Size><AbsDimension x="80" y="22"/></Size>
+				<Anchors><Anchor point="LEFT" relativeTo="SAHBuySearchBox" relativePoint="RIGHT"><Offset><AbsDimension x="10" y="1" /></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnClick>
+						SAHBuySearchButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<CheckButton name="SAHBuyExactCheckButton" inherits="UICheckButtonTemplate">
+				<Size><AbsDimension x="22" y="22"/></Size>
+				<Anchors><Anchor point="LEFT" relativeTo="SAHBuySearchButton" relativePoint="RIGHT"><Offset><AbsDimension x="40" y="0" /></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString inherits="GameFontNormalSmall" name="$parentTextLabel" justifyH="RIGHT" text="Exact">
+							<Size><AbsDimension x="40" y="24"/></Size>
+							<Anchors><Anchor point="RIGHT" relativeTo="SAHBuyExactCheckButton" relativePoint="LEFT"><Offset><AbsDimension x="0" y="1"/></Offset></Anchor></Anchors>
+						</FontString>	
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnClick>
+						SAH_ExactMatch = this:GetChecked()
+					</OnClick>
+					<OnLoad>
+						this:SetChecked(SAH_ExactMatch)
+					</OnLoad>
+				</Scripts>
+			</CheckButton>		
+			<CheckButton name="SAHBuyIsUsableCheckButton" inherits="UICheckButtonTemplate">
+				<Size><AbsDimension x="22" y="22"/></Size>
+				<Anchors><Anchor point="LEFT" relativeTo="SAHBuyExactCheckButton" relativePoint="RIGHT"><Offset><AbsDimension x="40" y="0" /></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString inherits="GameFontNormalSmall" name="$parentTextLabel" justifyH="RIGHT" text="Usable">
+							<Size><AbsDimension x="40" y="24"/></Size>
+							<Anchors><Anchor point="RIGHT" relativeTo="SAHBuyIsUsableCheckButton" relativePoint="LEFT"><Offset><AbsDimension x="0" y="1"/></Offset></Anchor></Anchors>
+						</FontString>	
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnClick>
+						SAH_IsUsable = this:GetChecked()
+					</OnClick>
+				</Scripts>
+			</CheckButton>		
+			<Button name="SAHBuyBuySelectedButton" inherits="UIPanelButtonTemplate" text="Buy Selected Auctions">
+				<Size><AbsDimension x="156" y="22"/></Size>
+				<Anchors><Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="51" y="14"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnClick>
+						SAHBuyBuySelectedButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button name="SAHBuyStopScanningButton" inherits="UIPanelButtonTemplate" text="Stop Scanning" enable="false">
+				<Size><AbsDimension x="100" y="22"/></Size>
+				<Anchors><Anchor point="RIGHT" relativeTo="SAHBuyBuySelectedButton" relativePoint="LEFT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnClick>
+						SAHBuyStopScanningButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Frame name="SAHBuyTotal" inherits="SmallMoneyFrameTemplate">
+				<Anchors><Anchor point="LEFT" relativePoint="RIGHT" relativeTo="SAHBuyTotalLabel"><Offset><AbsDimension x="10" y="0"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnLoad>
+						SmallMoneyFrame_OnLoad()
+						MoneyFrame_SetType("STATIC")
+					</OnLoad>
+				</Scripts>
+			</Frame>
+			<Frame name="SAHNumberTotal">
+				<Size>
+					<AbsDimension x="150" y="20"/>
+				</Size>
+				<Anchors><Anchor point="RIGHT" relativeTo="SAHBuyTotalLabel" relativePoint="LEFT"><Offset><AbsDimension x="10" y="2"/></Offset></Anchor></Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString name="SAHNumberTotalText" inherits="GameFontNormal"/>
+					</Layer>
+				</Layers>
+			</Frame>
+			<ScrollFrame name="SAHBuyScrollFrame" inherits="FauxScrollFrameTemplate">
+				<Size><AbsDimension x="635" y="309"/></Size>
+				<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="165" y="-98"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnVerticalScroll>
+						FauxScrollFrame_OnVerticalScroll(16, SAH_Buy_ScrollbarUpdate)
+					</OnVerticalScroll>
+				</Scripts>
+			</ScrollFrame>
+            <Button name="SAHBuyEntry1" inherits="SAHBuyEntryTemplate">
+				<Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyScrollFrame" relativePoint="TOPLEFT"><Offset><AbsDimension x="5" y="0"/></Offset></Anchor></Anchors>
+            </Button>
+            <Button name="SAHBuyEntry2"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry1"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry3"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry2"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry4"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry3"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry5"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry4"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry6"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry5"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry7"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry6"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry8"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry7"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry9"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry8"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry10" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry9"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry11" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry10" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry12" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry11" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry13" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry12" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry14" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry13" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry15" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry14" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry16" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry15" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry17" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry16" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry18" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry17" relativePoint="BOTTOMLEFT"/></Anchors></Button>
+            <Button name="SAHBuyEntry19" inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry18" relativePoint="BOTTOMLEFT"/></Anchors></Button>		
+
+			<Button name="SAHQuickBuyButton1" inherits="SAHQuickBuyTemplate" id="1"><Anchors><Anchor point="TOPLEFT" relativePoint="TOPLEFT"><Offset><AbsDimension x="15" y="-100"/></Offset></Anchor></Anchors></Button>
+			<Button name="SAHQuickBuyButton2" inherits="SAHQuickBuyTemplate" id="2"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton1" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton3" inherits="SAHQuickBuyTemplate" id="3"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton2" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton4" inherits="SAHQuickBuyTemplate" id="4"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton3" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton5" inherits="SAHQuickBuyTemplate" id="5"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton4" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton6" inherits="SAHQuickBuyTemplate" id="6"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton5" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton7" inherits="SAHQuickBuyTemplate" id="7"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton6" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton8" inherits="SAHQuickBuyTemplate" id="8"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton7" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton9" inherits="SAHQuickBuyTemplate" id="9"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton8" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton10" inherits="SAHQuickBuyTemplate" id="10"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton9" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton11" inherits="SAHQuickBuyTemplate" id="11"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton10" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton12" inherits="SAHQuickBuyTemplate" id="12"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton11" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton13" inherits="SAHQuickBuyTemplate" id="13"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton12" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton14" inherits="SAHQuickBuyTemplate" id="14"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton13" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton15" inherits="SAHQuickBuyTemplate" id="15"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton14" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton16" inherits="SAHQuickBuyTemplate" id="16"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton15" relativePoint="BOTTOM"/></Anchors></Button>
+			<Button name="SAHQuickBuyButton17" inherits="SAHQuickBuyTemplate" id="17"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyButton16" relativePoint="BOTTOM"/></Anchors></Button>
+
+			<CheckButton name="SAHQuickBuyCheckButton1" inherits="SAHQuickBuyCheckButtonTemplate" id="1">
+				<Anchors><Anchor point="LEFT" relativeTo="SAHQuickBuyButton1" relativePoint="RIGHT"></Anchor></Anchors>
+			</CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton2" inherits="SAHQuickBuyCheckButtonTemplate" id="2"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton1" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton3" inherits="SAHQuickBuyCheckButtonTemplate" id="3"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton2" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton4" inherits="SAHQuickBuyCheckButtonTemplate" id="4"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton3" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton5" inherits="SAHQuickBuyCheckButtonTemplate" id="5"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton4" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton6" inherits="SAHQuickBuyCheckButtonTemplate" id="6"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton5" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton7" inherits="SAHQuickBuyCheckButtonTemplate" id="7"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton6" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton8" inherits="SAHQuickBuyCheckButtonTemplate" id="8"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton7" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton9" inherits="SAHQuickBuyCheckButtonTemplate" id="9"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton8" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton10" inherits="SAHQuickBuyCheckButtonTemplate" id="10"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton9" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton11" inherits="SAHQuickBuyCheckButtonTemplate" id="11"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton10" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton12" inherits="SAHQuickBuyCheckButtonTemplate" id="12"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton11" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton13" inherits="SAHQuickBuyCheckButtonTemplate" id="13"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton12" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton14" inherits="SAHQuickBuyCheckButtonTemplate" id="14"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton13" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton15" inherits="SAHQuickBuyCheckButtonTemplate" id="15"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton14" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton16" inherits="SAHQuickBuyCheckButtonTemplate" id="16"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton15" relativePoint="BOTTOM"/></Anchors></CheckButton>
+			<CheckButton name="SAHQuickBuyCheckButton17" inherits="SAHQuickBuyCheckButtonTemplate" id="17"><Anchors><Anchor point="TOP" relativeTo="SAHQuickBuyCheckButton16" relativePoint="BOTTOM"/></Anchors></CheckButton>
+		</Frames>
+	</Frame>
+	<Frame name="SAHBuyReport" frameStrata="FULLSCREEN_DIALOG"  toplevel="true" parent="UIParent" enableMouse="true" hidden="true">
+		<Size><AbsDimension x="400" y="180" /></Size>		
+		<Anchors><Anchor point="TOP"><Offset><AbsDimension x="0" y="-90"/></Offset></Anchor></Anchors>
+
+		<Backdrop bgFile="Interface\CharacterFrame\UI-Party-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+			<BackgroundInsets><AbsInset left="11" right="12" top="12" bottom="11"/></BackgroundInsets>
+			<TileSize><AbsValue val="32"/></TileSize>
+			<EdgeSize><AbsValue val="32"/></EdgeSize>
+		</Backdrop>
+		<Frames>
+			<SimpleHTML name="SAHBuyReportHTML">
+				<Size><AbsDimension x="420" y="420" /></Size>		
+				<Anchors>
+					<Anchor point="TOPLEFT"><Offset><AbsDimension x="30" y="-30"/></Offset></Anchor>
+				</Anchors>
+				<FontString inherits="GameFontHighlightSmall"/>
+				<FontStringHeader1 inherits="GameFontNormal"/>
+			</SimpleHTML>
+
+			<Button inherits="UIPanelButtonTemplate" text="Close">
+				<Size><AbsDimension x="100" y="22"/>	</Size>
+				<Anchors><Anchor point="BOTTOMRIGHT"><Offset><AbsDimension x="-20" y="15"/></Offset></Anchor></Anchors>
+				<Scripts>
+					<OnClick>
+						SAHBuyReport:Hide()
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+	</Frame>
+</Ui>

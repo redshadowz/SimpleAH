@@ -1,0 +1,5 @@
+## Interface: 11200
+## Title: SimpleAH
+## Notes: A lightweight addon to manage auctions
+## SavedVariables: SAHSellEntries, SAHSearchHistory, SAH_AUCTION_DURATION, SAH_ExactMatch
+SimpleAH.xml
