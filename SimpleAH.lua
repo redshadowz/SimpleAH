@@ -11,10 +11,11 @@ local currentJob,scanData,bestPriceOurStackSize,currentAuctionItem,postedItem,en
 local currentPage = 0
 local state = 0 -- 0(Idle), 1(prequery), 2(postquery), 3(processing)
 local sellstate = 0 -- 0(Idle), 1(make list of bag positions), 2(post multiple), 3(waiting to post another multiple after AUCTION_OWNED_LIST_UPDATE)
-local totalleft = 0
 local totalbought = 0
 local sellorbuy = 0
+local numSellRepeat = 0
 local SAH_timeOfLastUpdate = GetTime()
+local SAH_timeOfLastPageScan = 0
 local selectedEntries = {}
 local lastSelectedEntry
 local SellRepeat = {}
@@ -59,9 +60,16 @@ function SAH_OnUpdate()
 		end
 		SAH_timeOfLastUpdate = GetTime()
 		if sellstate == 2 then
-			if PanelTemplates_GetSelectedTab(AuctionFrame) == SAH.tabs.sell.index then SAH_AuctionSellRepeatAuctionPost() else SellRepeatBagPositions = {} sellstate = 0 end
+			if PanelTemplates_GetSelectedTab(AuctionFrame) == SAH.tabs.sell.index then
+				SAH_AuctionSellRepeatAuctionPost()
+			else
+				SellRepeatBagPositions = {}
+				sellstate = 0
+				if numSellRepeat > 0 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat+1).." items", 1, 1, 0.5) numSellRepeat = 0 end
+			end
 		elseif sellstate == 1 or sellstate == 3 then
 			sellstate = 0
+			if numSellRepeat > 0 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat+1).." items", 1, 1, 0.5) numSellRepeat = 0 end
 		end
 	end
 end
@@ -192,7 +200,7 @@ function SAH_AddTabs()
 	PanelTemplates_EnableTab(AuctionFrame, SAH.tabs.buy.index)
 end
 function SAH_HideElems(tt)
-	if not tt then return; end
+	if not tt then return end
 	for i,x in ipairs(tt) do x:Hide() end
 end
 function SAH_ShowElems(tt)
@@ -297,7 +305,7 @@ function SAH_Scan_Start(job)
 	currentJob = job
 	scanData = {}
 	state = 1
-	if SAH_OrderedCount > 0 then
+	if SAH_OrderedCount > 0 and SAH_timeOfLastPageScan > GetTime() then
 		SAH_ProcessQueryResults(true)
 		if sellorbuy == 1 and SAH_OrderedCount > 0 and SAH_PurchasedCount == SAH_OrderedCount then
 			SAH_Scan_Complete()
@@ -355,7 +363,7 @@ function SAH_ProcessQueryResults(processDataOnly)
 		local itemLink = GetAuctionItemLink("list", i)
 		local duration = GetAuctionItemTimeLeft("list", i)
 		SAH_Scan_ClearTooltip()
-		SAHScanTooltip:SetOwner(UIParent, "ANCHOR_NONE");
+		SAHScanTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 		SAHScanTooltip:SetAuctionItem("list", i)
 		SAHScanTooltip:Show()
 		local tooltip = SAH_Scan_ExtractTooltip()
@@ -379,12 +387,8 @@ function SAH_ProcessQueryResults(processDataOnly)
 	end
 	if processDataOnly then return end
 
-	local numAucPages = 0;
-	while totalAuctions > 0 do
-		totalleft = totalAuctions
-		totalAuctions = totalAuctions - 50
-		numAucPages = numAucPages + 1;
-	end
+	local numAucPages = 0
+	while totalAuctions > 0 do totalAuctions = totalAuctions - 50; numAucPages = numAucPages + 1; end
 	if sellorbuy == 2 and SAH_OrderedCount and SAH_OrderedCount > 0 then
 		SAH_SetBuyMessage("Scanning: page "..currentPage.." / "..numAucPages.." .. Stack "..SAH_PurchasedCount.."/"..SAH_OrderedCount.." .. Item "..SAH_PurchasedNumber.."/"..SAH_OrderedNumber)
 	else
@@ -396,13 +400,14 @@ function SAH_ProcessQueryResults(processDataOnly)
 	end
 	if SAH_ItemsToPurchasePages and not SAH_ItemsToPurchasePages[1] then
 		SAH_Scan_Complete()
-		totalbought = 0;
-	elseif currentPage <  numAucPages and not (currentPage + 1 == numAucPages and totalleft - totalbought < 1) then
+		totalbought = 0
+	elseif currentPage < numAucPages then
 		state = 1
 	else
 		SAH_Scan_Complete()
-		totalbought = 0;
+		totalbought = 0
 	end
+	SAH_timeOfLastPageScan = GetTime() + 15
 end
 
 --Sell Functions
@@ -428,7 +433,7 @@ function SAH_AuctionFrameAuctions_Update()
 end
 function SAH_AuctionsCreateAuctionButton_OnClick()
 	if PanelTemplates_GetSelectedTab(AuctionFrame) == SAH.tabs.sell.index and AuctionFrame:IsShown() then postedItem = { name = currentAuctionItem.name, price = MoneyInputFrame_GetCopper(BuyoutPrice), } end
-	local auctionTime = 2;
+	local auctionTime = 2
 	if AuctionsMediumAuctionButton:GetChecked() then auctionTime = 3 elseif AuctionsLongAuctionButton:GetChecked() then auctionTime = 4 end
 	SAHSellEntries[currentAuctionItem.name].sold = { stackSize = currentAuctionItem.stackSize, count = 1, buyoutPrice = MoneyInputFrame_GetCopper(BuyoutPrice), itemPrice = SAH_Round(MoneyInputFrame_GetCopper(BuyoutPrice)/currentAuctionItem.stackSize), numYours = 1, maxTimeLeft = auctionTime, }
 	for i=1,getn(SAHSellEntries[currentAuctionItem.name]) do
@@ -450,6 +455,7 @@ function SAH_AuctionsCreateAuctionButton_OnClick()
 		sellstate = 1
 		SAH_timeOfLastUpdate = GetTime() + .5
 		SellRepeat = { currentAuctionItem.name,currentAuctionItem.stackSize,tonumber(SAHSellRepeatBox:GetText()) }
+		numSellRepeat = 1
 	end
 	SAH.orig.AuctionsCreateAuctionButton_OnClick()
 end
@@ -487,8 +493,10 @@ function SAH_AuctionSellRepeatAuctionPost()
 		table.remove(SellRepeatBagPositions,1)
 		sellstate = 3
 		SAH_timeOfLastUpdate = GetTime() + .5
+		numSellRepeat = numSellRepeat + 1
 	else
 		sellstate = 0
+		if numSellRepeat > 0 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat+1).." items", 1, 1, 0.5) numSellRepeat = 0 end
 	end
 end
 function SAH_AuctionSellItemButton_OnEvent()
@@ -675,14 +683,14 @@ function SAH_RefreshEntries()
 				SAH_UpdateRecommendation()
 				if not SAHSellEntries[currentAuctionItem.name][1] then
 					SAH_SetSellMessage("No auctions were found for \n\n"..currentAuctionItem.name)
-					SAHSellEntries[currentAuctionItem.name] = {}
+					SAHSellEntries[currentAuctionItem.name] = { sold=SAHSellEntries[currentAuctionItem.name].sold }
 				end
 			end,
 			onAbort = function()
 				SAH_UpdateRecommendation()
 				if not SAHSellEntries[currentAuctionItem.name][1] then
 					SAH_SetSellMessage("No auctions were found for \n\n"..currentAuctionItem.name)
-					SAHSellEntries[currentAuctionItem.name] = {}
+					SAHSellEntries[currentAuctionItem.name] = { sold=SAHSellEntries[currentAuctionItem.name].sold }
 				end
 			end
 		}
@@ -912,7 +920,7 @@ function SAH_SetBuyMessage(msg)
 end
 function SAHBuyEntry_OnClick(id)
 	if IsShiftKeyDown() and ChatFrameEditBox:IsVisible() then
-		ChatFrameEditBox:Insert(entries[id]["itemLink"]);
+		ChatFrameEditBox:Insert(entries[id]["itemLink"])
 	elseif selectedEntries[entries[id]] ~= nil then
 		selectedEntries[entries[id]] = nil
 		lastSelectedEntry = nil
@@ -935,14 +943,14 @@ end
 function SAHBuyEntry_OnEnter(id)
 	local found,_,itemString = string.find(entries[id].itemLink, "^|%x+|H(.+)|h%[.+%]")
 	if found then
-		GameTooltip:SetOwner(this, "ANCHOR_RIGHT");
-		GameTooltip:SetHyperlink(itemString);
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetHyperlink(itemString)
 		if RedSearch then
 			RedSearch.TooltipHook(entries[id].itemLink,entries[id].stackSize)
 		elseif EnhTooltip then
-			EnhTooltip.TooltipCall(GameTooltip, entries[id].name, entries[id].itemLink, entries[id].quality, entries[id].stackSize);
+			EnhTooltip.TooltipCall(GameTooltip, entries[id].name, entries[id].itemLink, entries[id].quality, entries[id].stackSize)
 		end
-		GameTooltip:Show();
+		GameTooltip:Show()
 	end
 end
 function SAHBuyProcessScanResults(rawData)
@@ -1020,7 +1028,7 @@ end
 function SAH_Buy_ScrollbarUpdate()
 	local numrows
 	if not entries then numrows = 0 else numrows = getn(entries) end
-	FauxScrollFrame_Update(SAHBuyScrollFrame, numrows, 19, 16);
+	FauxScrollFrame_Update(SAHBuyScrollFrame, numrows, 19, 16)
 	for line = 1,19 do
 		local dataOffset = line + FauxScrollFrame_GetOffset(SAHBuyScrollFrame)
 		local lineEntry = getglobal("SAHBuyEntry"..line)
@@ -1054,13 +1062,13 @@ function SAH_QuickBuyButtonPressed(id)
 	SAHBuySearchButton_OnClick()
 end
 function SAH_QuickBuyUpdateButtons(name)
-	local numPriority = 0;
+	local numPriority = 0
 	local NameWasPriority
-	local counter = 1;
+	local counter = 1
 	while true do
 		if not name or not SAHSearchHistory[counter] or counter == 21 then break end
-		if SAHSearchHistory[counter][2] then numPriority = numPriority+1; end
-		if name == SAHSearchHistory[counter][1] then if SAHSearchHistory[counter][2] then NameWasPriority = true; end table.remove(SAHSearchHistory,counter) else counter = counter+1 end
+		if SAHSearchHistory[counter][2] then numPriority = numPriority+1 end
+		if name == SAHSearchHistory[counter][1] then if SAHSearchHistory[counter][2] then NameWasPriority = true end table.remove(SAHSearchHistory,counter) else counter = counter+1 end
 	end
 	if name then
 		if NameWasPriority then
@@ -1090,6 +1098,6 @@ function SAH_QuickBuyUpdateButtons(name)
 	if getn(SAHSearchHistory) > 17 then table.remove(SAHSearchHistory,18) end	
 end
 function SAH_QuickBuyPriorityCheckButtonPressed(id,priority)
-	SAHSearchHistory[id][2] = priority;
+	SAHSearchHistory[id][2] = priority
 	SAH_QuickBuyUpdateButtons(SAHSearchHistory[id][1])
 end
