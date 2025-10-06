@@ -65,11 +65,11 @@ function SAH_OnUpdate()
 			else
 				SellRepeatBagPositions = {}
 				sellstate = 0
-				if numSellRepeat > 0 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat+1).." items", 1, 1, 0.5) numSellRepeat = 0 end
+				if numSellRepeat > 1 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat).." items", 1, 1, 0.5) numSellRepeat = 0 end
 			end
 		elseif sellstate == 1 or sellstate == 3 then
 			sellstate = 0
-			if numSellRepeat > 0 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat+1).." items", 1, 1, 0.5) numSellRepeat = 0 end
+			if numSellRepeat > 1 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat).." items", 1, 1, 0.5) numSellRepeat = 0 end
 		end
 	end
 end
@@ -135,14 +135,15 @@ function SAH_AuctionFrameTab_OnClick(index)
 		AuctionFrameTab_OnClick(3)
 		PanelTemplates_SetTab(AuctionFrame, SAH.tabs.sell.index)
 		SAHSellPanel:Show()
+		SAH_HideElems(SAH.tabs.sell.hiddenElements)
 		AuctionFrame:EnableMouse(false)
 		SAH_OnNewAuctionUpdate()
-		SAH_HideElems(SAH.tabs.sell.hiddenElements)
 		SAHSellStopScanningButton:Disable()
     elseif index == SAH.tabs.buy.index then
         AuctionFrameTab_OnClick(2)
 		PanelTemplates_SetTab(AuctionFrame, SAH.tabs.buy.index)
 		SAHBuyPanel:Show()
+		SAH_HideElems(SAH.tabs.buy.hiddenElements)
 		AuctionFrame:EnableMouse(false)
 		SAH_Buy_StatisticsUpdate()
 		SAH_Buy_ScrollbarUpdate()
@@ -201,10 +202,10 @@ function SAH_AddTabs()
 end
 function SAH_HideElems(tt)
 	if not tt then return end
-	for i,x in ipairs(tt) do x:Hide() end
+	for i,x in ipairs(tt) do x:Hide() x:SetAlpha(0) end
 end
 function SAH_ShowElems(tt)
-	for i,x in ipairs(tt) do x:Show() end
+	for i,x in ipairs(tt) do x:Show() x:SetAlpha(1) end
 end
 function SAH_PluralizeIf(word, count)
 	if count and count == 1 then return word else return word.."s" end
@@ -444,6 +445,7 @@ function SAH_AuctionsCreateAuctionButton_OnClick()
 				sellstate = 1
 				SAH_timeOfLastUpdate = GetTime() + .5
 				SellRepeat = { currentAuctionItem.name,currentAuctionItem.stackSize,tonumber(SAHSellRepeatBox:GetText()) }
+				numSellRepeat = 1
 			end
 			SAH.orig.AuctionsCreateAuctionButton_OnClick()
 			return
@@ -496,7 +498,7 @@ function SAH_AuctionSellRepeatAuctionPost()
 		numSellRepeat = numSellRepeat + 1
 	else
 		sellstate = 0
-		if numSellRepeat > 0 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat+1).." items", 1, 1, 0.5) numSellRepeat = 0 end
+		if numSellRepeat > 1 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat).." items", 1, 1, 0.5) numSellRepeat = 0 end
 	end
 end
 function SAH_AuctionSellItemButton_OnEvent()
