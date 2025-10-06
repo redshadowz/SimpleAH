@@ -351,7 +351,7 @@ function SAH_Scan_ExtractTooltip()
 	return tooltip
 end
 function SAH_Scan_ItemCharges(tooltip)
-	for _, entry in ipairs(tooltip) do
+	for _,entry in ipairs(tooltip) do
 		local chargesString = gsub(entry, "(%d+) Charges", "%1")
 		local charges = tonumber(chargesString)
 		if charges then return charges end
@@ -599,7 +599,7 @@ function SAH_UpdateRecommendation()
 				end
 				newBuyoutPrice = SAHSellEntries[currentAuctionItem.name].selected.itemPrice * currentAuctionItem.stackSize
 				if SAHSellEntries[currentAuctionItem.name].selected.numYours < SAHSellEntries[currentAuctionItem.name].selected.count then newBuyoutPrice = math.max(0, newBuyoutPrice - 1) end
-				if SAHSellEntries[currentAuctionItem.name].selected.stackSize == SAHSellEntries[currentAuctionItem.name][1].stackSize and SAHSellEntries[currentAuctionItem.name].selected.buyoutPrice == SAHSellEntries[currentAuctionItem.name][1].buyoutPrice then
+				if SAHSellEntries[currentAuctionItem.name][1] and SAHSellEntries[currentAuctionItem.name].selected.stackSize == SAHSellEntries[currentAuctionItem.name][1].stackSize and SAHSellEntries[currentAuctionItem.name].selected.buyoutPrice == SAHSellEntries[currentAuctionItem.name][1].buyoutPrice then
 					SAHRecommendBasisText:SetText("(based on cheapest)")
 				elseif bestPriceOurStackSize and SAHSellEntries[currentAuctionItem.name].selected.stackSize == bestPriceOurStackSize.stackSize and SAHSellEntries[currentAuctionItem.name].selected.buyoutPrice == bestPriceOurStackSize.buyoutPrice then
 					SAHRecommendBasisText:SetText("(based on cheapest stack of the same size)")
