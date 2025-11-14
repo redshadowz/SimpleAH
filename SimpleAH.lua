@@ -606,6 +606,8 @@ function SAH_UpdateRecommendation()
 				else
 					SAHRecommendBasisText:SetText("(based on auction selected below)")
 				end
+			elseif SAHSellEntries[currentAuctionItem.name].sold then
+				newBuyoutPrice = SAHSellEntries[currentAuctionItem.name].sold.itemPrice
 			else
 				newBuyoutPrice = math.max(0, CalculateAuctionDeposit(1440) - 1) * 3
 			end
