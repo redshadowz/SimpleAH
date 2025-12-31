@@ -281,7 +281,7 @@
 		<Frames>
 			<Frame>
 				<Size><AbsDimension x="120" y="16" /></Size>
-				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="0" y="-3"/></Offset></Anchor></Anchors>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="120" y="-3"/></Offset></Anchor></Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
 						<FontString name="$parent_Name" inherits="GameFontHighlightSmall">
@@ -292,7 +292,7 @@
 			</Frame>
 			<Frame>
 				<Size><AbsDimension x="120" y="16" /></Size>
-				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="313" y="0"/></Offset></Anchor></Anchors>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="433" y="0"/></Offset></Anchor></Anchors>
 				<Frames>
 					<Frame name="$parent_UnitPrice" inherits="SmallMoneyFrameTemplate">
 						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
@@ -307,7 +307,7 @@
 			</Frame>
 			<Frame>
 				<Size><AbsDimension x="50" y="16" /></Size>
-				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="420" y="-3"/></Offset></Anchor></Anchors>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="540" y="-3"/></Offset></Anchor></Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
 						<FontString name="$parent_StackSize" inherits="GameFontHighlightSmall">
@@ -318,7 +318,7 @@
 			</Frame>
 			<Frame>
 				<Size><AbsDimension x="120" y="16" /></Size>
-				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="520" y="0"/></Offset></Anchor></Anchors>
+				<Anchors><Anchor point="LEFT"><Offset><AbsDimension x="640" y="0"/></Offset></Anchor></Anchors>
 				<Frames>
 					<Frame name="$parent_TotalPrice" inherits="SmallMoneyFrameTemplate">
 						<Anchors><Anchor point="RIGHT"><Offset><AbsDimension x="0" y="0"/></Offset></Anchor></Anchors>
@@ -338,7 +338,7 @@
 			<Anchors>
 				<Anchor point="TOPLEFT">
 					<Offset>
-						<AbsDimension x="0" y="0"/>
+						<AbsDimension x="120" y="0"/>
 					</Offset>
 				</Anchor>
 			</Anchors>
@@ -529,7 +529,7 @@
 				</Scripts>
 			</ScrollFrame>
             <Button name="SAHBuyEntry1" inherits="SAHBuyEntryTemplate">
-				<Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyScrollFrame" relativePoint="TOPLEFT"><Offset><AbsDimension x="5" y="0"/></Offset></Anchor></Anchors>
+				<Anchors><Anchor point="TOPLEFT"><Offset><AbsDimension x="50" y="-98"/></Offset></Anchor></Anchors>
             </Button>
             <Button name="SAHBuyEntry2"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry1"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
             <Button name="SAHBuyEntry3"  inherits="SAHBuyEntryTemplate"><Anchors><Anchor point="TOPLEFT" relativeTo="SAHBuyEntry2"  relativePoint="BOTTOMLEFT"/></Anchors></Button>
