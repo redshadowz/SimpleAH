@@ -851,7 +851,7 @@ function SAHBuySearchButton_OnClick()
 	local lfs,lfe,wordString = 1
 	while true do
 		lfs,lfe,wordString = string.find(entryName,"([%a%p]+)",lfs)
-		if not wordString then break end
+		if not wordString or wordString == "" then break end
 		if not DoNotCapitalize[wordString] or lfs == 1 then
 			entryName = string.sub(entryName,1,lfs-1)..string.upper(string.sub(entryName,lfs,lfs))..string.sub(entryName,lfs+1,lfe)..string.sub(entryName,lfe+1)
 		end
@@ -1036,7 +1036,6 @@ function SAH_Buy_ScrollbarUpdate()
 	for line = 1,19 do
 		local dataOffset = line + FauxScrollFrame_GetOffset(SAHBuyScrollFrame)
 		local lineEntry = getglobal("SAHBuyEntry"..line)
-		if numrows <= 19 then lineEntry:SetWidth(800) else lineEntry:SetWidth(782) end
 		lineEntry:SetID(dataOffset)
 		if dataOffset <= numrows and entries[dataOffset] then
 			local entry = entries[dataOffset]
