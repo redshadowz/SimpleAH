@@ -24,31 +24,64 @@ local selectedEntries = {}
 local DoNotCapitalize = { ["the"] = true,["a"] = true,["of"] = true,["on"] = true,["by"] = true,["and"] = true, }
 local SAH_PurchasedItems = {}
 local SAH_ItemsToPurchasePages
+local self = CreateFrame'Frame'
+self:SetScript('OnEvent', function() this[event](this) end)
+self:RegisterEvent("ADDON_LOADED")
+self:RegisterEvent("AUCTION_HOUSE_SHOW")
+self:RegisterEvent("AUCTION_HOUSE_CLOSED")
+self:RegisterEvent("AUCTION_BIDDER_LIST_UPDATE")
+self:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
+self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
 
---Core Functions
-function SAH_OnEvent()
-	if event == "AUCTION_ITEM_LIST_UPDATE" then
-		if state == 2 then
-			state = 3
-			SAH_ProcessQueryResults()
-		end
-	elseif event == "AUCTION_OWNED_LIST_UPDATE" then
-		if sellstate == 1 then
-			SAH_AuctionSellRepeatSetup()
-			sellstate = 2
-		elseif SellRepeatBagPositions[1] then
-			sellstate = 2
-		end
-		SAH_timeOfLastUpdate = GetTime() - .49999999999
-	elseif event == "AUCTION_BIDDER_LIST_UPDATE" and AuctionFrame:IsShown() and (PanelTemplates_GetSelectedTab(AuctionFrame) == SAH.tabs.buy.index) then
-		SAH_timeOfLastUpdate = GetTime() - .49999999999
-		SAH_HideElemsDelay = true
-	elseif event == "ADDON_LOADED" then
-		SAH_OnAddonLoaded()
-	elseif event == "AUCTION_HOUSE_CLOSED" then
-		SAH_OnAuctionHouseClosed()
+function self:ADDON_LOADED()
+	if string.lower(arg1) == "blizzard_auctionui" then
+		SAH_AddTabs()
+		SAH_AddPanels()
+		SAH_SetupHookFunctions()
+		SAH.tabs.sell.hiddenElements = { AuctionsTitle, AuctionsScrollFrame, AuctionsButton1, AuctionsButton2, AuctionsButton3, AuctionsButton4, AuctionsButton5, AuctionsButton6, AuctionsButton7, AuctionsButton8, AuctionsButton9,
+										 AuctionsQualitySort, AuctionsDurationSort, AuctionsHighBidderSort, AuctionsBidSort, AuctionsCancelAuctionButton }
+		SAH.tabs.buy.hiddenElements = { BidTitle, BidScrollFrame, BidButton1, BidButton2, BidButton3, BidButton4, BidButton5, BidButton6, BidButton7, BidButton8, BidButton9, BidQualitySort, BidLevelSort, BidDurationSort,
+										BidBuyoutSort, BidStatusSort, BidBidSort, BidBidButton, BidBuyoutButton, BidBidPrice, BidBidText }
+		SAH.tabs.sell.recommendationElements = { SAHRecommendText, SAHRecommendPerItemText, SAHRecommendPerItemPrice, SAHRecommendPerStackText, SAHRecommendPerStackPrice, SAHRecommendBasisText, SAHRecommendItemTex, }
+		SAH_QuickBuyUpdateButtons()
+		self:SetScript('OnUpdate', function() SAH_OnUpdate() end)
+		self:Show()
+		self:UnregisterEvent("ADDON_LOADED")
 	end
 end
+function self:AUCTION_HOUSE_SHOW()
+	if ATSWShoppingListFrame then
+		if not SAHATSWHideButton then CreateFrame("Button", "SAHATSWHideButton", ATSWShoppingListFrame, "UIPanelCloseButton") SAHATSWHideButton:SetPoint("TOPRIGHT", ATSWShoppingListFrame, "TOPRIGHT", -40, 0) end
+	end
+end
+function self:AUCTION_HOUSE_CLOSED()
+	if state ~= 0 then SAH_Scan_Abort() end
+	SAHSellPanel:Hide()
+    SAHBuyPanel:Hide()
+end
+function self:AUCTION_BIDDER_LIST_UPDATE()
+	if AuctionFrame:IsShown() and (PanelTemplates_GetSelectedTab(AuctionFrame) == SAH.tabs.buy.index) then
+		SAH_timeOfLastUpdate = GetTime() - .49999999999
+		SAH_HideElemsDelay = true
+	end
+end
+function self:AUCTION_ITEM_LIST_UPDATE()
+	if state == 2 then
+		state = 3
+		SAH_ProcessQueryResults()
+	end
+end
+function self:AUCTION_OWNED_LIST_UPDATE()
+	if sellstate == 1 then
+		SAH_AuctionSellRepeatSetup()
+		sellstate = 2
+	elseif SellRepeatBagPositions[1] then
+		sellstate = 2
+	end
+	SAH_timeOfLastUpdate = GetTime() - .49999999999
+end
+
+--Core Functions
 function SAH_OnUpdate()
 	if GetTime() - SAH_timeOfLastUpdate > 0.5 then
 		if state == 1 then
@@ -71,19 +104,6 @@ function SAH_OnUpdate()
 			sellstate = 0
 			if numSellRepeat > 1 then DEFAULT_CHAT_FRAME:AddMessage("SAH: Posted "..(numSellRepeat).." items", 1, 1, 0.5) numSellRepeat = 0 end
 		end
-	end
-end
-function SAH_OnAddonLoaded()
-	if string.lower(arg1) == "blizzard_auctionui" then
-		SAH_AddTabs()
-		SAH_AddPanels()
-		SAH_SetupHookFunctions()
-		SAH.tabs.sell.hiddenElements = { AuctionsTitle, AuctionsScrollFrame, AuctionsButton1, AuctionsButton2, AuctionsButton3, AuctionsButton4, AuctionsButton5, AuctionsButton6, AuctionsButton7, AuctionsButton8, AuctionsButton9,
-										 AuctionsQualitySort, AuctionsDurationSort, AuctionsHighBidderSort, AuctionsBidSort, AuctionsCancelAuctionButton }
-		SAH.tabs.buy.hiddenElements = { BidTitle, BidScrollFrame, BidButton1, BidButton2, BidButton3, BidButton4, BidButton5, BidButton6, BidButton7, BidButton8, BidButton9, BidQualitySort, BidLevelSort, BidDurationSort,
-										BidBuyoutSort, BidStatusSort, BidBidSort, BidBidButton, BidBuyoutButton, BidBidPrice, BidBidText }
-		SAH.tabs.sell.recommendationElements = { SAHRecommendText, SAHRecommendPerItemText, SAHRecommendPerItemPrice, SAHRecommendPerStackText, SAHRecommendPerStackPrice, SAHRecommendBasisText, SAHRecommendItemTex, }
-		SAH_QuickBuyUpdateButtons()
 	end
 end
 function SAH_SetupHookFunctions()
@@ -118,11 +138,6 @@ function SAH_SetupHookFunctions()
 	
 	SAH.orig.AuctionsCreateAuctionButton_OnClick = AuctionsCreateAuctionButton:GetScript('OnClick')
 	AuctionsCreateAuctionButton:SetScript('OnClick', SAH_AuctionsCreateAuctionButton_OnClick)
-end
-function SAH_OnAuctionHouseClosed()
-	if state ~= 0 then SAH_Scan_Abort() end
-	SAHSellPanel:Hide()
-    SAHBuyPanel:Hide()
 end
 function SAH_AuctionFrameTab_OnClick(index)
 	if not index then index = this:GetID() end
@@ -611,7 +626,7 @@ function SAH_UpdateRecommendation()
 			else
 				newBuyoutPrice = math.max(0, CalculateAuctionDeposit(1440) - 1) * 3
 			end
-			newStartPrice = newBuyoutPrice * 0.95
+			newStartPrice = newBuyoutPrice - 1 -- * 0.95
 			SAHSellMessage:Hide()	
 			SAHRecommendText:SetText("Recommended Buyout Price")
 			SAHRecommendPerStackText:SetText("for your stack of "..currentAuctionItem.stackSize)
@@ -1098,7 +1113,7 @@ function SAH_QuickBuyUpdateButtons(name)
 			getglobal("SAHQuickBuyCheckButton"..i):Hide()
 		end
 	end
-	if getn(SAHSearchHistory) > 17 then table.remove(SAHSearchHistory,18) end	
+	if getn(SAHSearchHistory) > 17 then table.remove(SAHSearchHistory,18) end
 end
 function SAH_QuickBuyPriorityCheckButtonPressed(id,priority)
 	SAHSearchHistory[id][2] = priority

@@ -1,25 +1,7 @@
 <Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
 
 	<Script file="SimpleAH.lua"/> 
-  
-	<!-- Core XML --> 
-	<Frame>
-      <Scripts> 
-			<OnLoad>
-				this:RegisterEvent("ADDON_LOADED")
-				this:RegisterEvent("AUCTION_HOUSE_CLOSED")
-				this:RegisterEvent("AUCTION_BIDDER_LIST_UPDATE")
-				this:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
-				this:RegisterEvent("AUCTION_OWNED_LIST_UPDATE")
-			</OnLoad>
-			<OnEvent> 
-				SAH_OnEvent()
-			</OnEvent> 
-			<OnUpdate>
-				SAH_OnUpdate()
-			</OnUpdate>
-		</Scripts> 
-	</Frame>
+
 	<!-- Scan XML -->
 	<GameTooltip name="SAHScanTooltip" inherits="GameTooltipTemplate"/>
 	<!-- Sell XML -->
